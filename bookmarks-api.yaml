@@ -1,0 +1,117 @@
+openapi: 3.1.0
+info:
+  title: Bookmarks API
+  version: "1.0"
+  description: >
+    ITI8801 assignment 5, the API for student code 265470IAIM. Implement exactly
+    this: the paths, methods, status codes, field names and types. The
+    validator checks your service against this document.
+servers:
+  - url: http://localhost
+    description: your service, on the port it listens on
+security: []
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: The service is up and can reach its database
+      responses:
+        "200":
+          description: Up, and the database answers
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+        "503":
+          description: Up, but the database does not answer
+  /api/bookmarks:
+    get:
+      operationId: listBookmarks
+      summary: All bookmarks, or those with exactly this name
+      parameters:
+        - name: name
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: The bookmarks, in the order they were created
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Bookmark" }
+    post:
+      operationId: createBookmark
+      summary: Create a bookmark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NewBookmark" }
+      responses:
+        "201":
+          description: The created bookmark, with the id the service assigned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Bookmark" }
+        "400":
+          description: The body is not a valid NewBookmark
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /api/bookmarks/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    get:
+      operationId: getBookmark
+      summary: One bookmark
+      responses:
+        "200":
+          description: The bookmark
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Bookmark" }
+        "404":
+          description: No bookmark with this id, or the id is not a positive integer
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    delete:
+      operationId: deleteBookmark
+      summary: Delete a bookmark
+      responses:
+        "204":
+          description: Deleted; no body
+        "404":
+          description: No bookmark with this id
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+components:
+  schemas:
+    NewBookmark:
+      type: object
+      required: [name, visits]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100, pattern: "^[^\\u0000]*$", description: "no zero bytes: PostgreSQL cannot store them" }
+        visits: { type: integer, minimum: 0, maximum: 1000000, description: "how many times it was opened" }
+    Bookmark:
+      type: object
+      required: [id, name, visits]
+      properties:
+        id: { type: integer, minimum: 1 }
+        name: { type: string }
+        visits: { type: integer, minimum: 0 }
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, const: ok }
