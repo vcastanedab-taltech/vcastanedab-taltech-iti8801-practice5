@@ -8,7 +8,7 @@ app = FastAPI(title="Mini Items API", version="1.0")
 # DATABASE CONNECTION -------------------------------------------------------------------
 
 DB_CONFIG = {
-    "host": "172.30.160.1",
+    "host": "localhost",
     "database": "postgres",
     "user": "postgres",
     "password": "Vic62189l555",
@@ -21,6 +21,10 @@ def get_db_connection():
         return connection
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Database does not answer: {str(e)}")
+
+def close_db_connection(cursor, connection):
+    cursor.close()
+    connection.close()
 
 # API -------------------------------------------------------------------
 
@@ -48,10 +52,10 @@ def health():
     try:
         cursor.execute("SELECT 1;")
     except Exception as e:
+        close_db_connection(cursor, conn)
         raise HTTPException(status_code=503, detail="Service up, but the database does not answer")
 
-    cursor.close()
-    conn.close()
+    close_db_connection(cursor, conn)
 
     return Health(status="ok")
 
@@ -75,24 +79,63 @@ def list_bookmarks(name: str | None = None):
 
 # Create a bookmark
 @app.post("/api/bookmarks", status_code=201, operation_id="createBookmark", responses={400: {"model": Error}})
-def create_item(bookmark: NewBookmark):
-    conn = get_db_connection()
+def create_bookmark(bookmark: NewBookmark):
+    if not bookmark.name or len(bookmark.name) < 1 or len(bookmark.name) > 100 or "\u0000" in bookmark.name:
+        raise HTTPException(status_code=400, detail={"error": "The body is not a valid NewBookmark"})
+    elif bookmark.visits < 0 or bookmark.visits > 1000000:
+        raise HTTPException(status_code=400, detail={"error": "The body is not a valid NewBookmark"})
 
+    conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
-    try:
-        cursor.execute("INSERT INTO bookmarks (name, visits) VALUES (%s, %s) RETURNING id, name, visits;",
-                       (bookmark.name, bookmark.visits))
-    except Exception as e:
-        raise HTTPException(status_code=400, detail={"error": "The body is not a valid NewBookmark"})
+    cursor.execute("INSERT INTO bookmarks (name, visits) VALUES (%s, %s) RETURNING id, name, visits;",
+                   (bookmark.name, bookmark.visits))
 
     new_bookmark = cursor.fetchone()
 
     conn.commit()
 
-    cursor.close()
-    conn.close()
+    close_db_connection(cursor, conn)
 
     return new_bookmark
 
-# TODO: /api/bookmarks/{id}
+# Get a bookmark
+@app.get("/api/bookmarks/{id}", status_code=200, operation_id="getBookmark", responses={404: {"model": Error}})
+def get_bookmark(id: int):
+    if id <= 0:
+        raise HTTPException(status_code=404, detail={"error": "The id is not a positive integer"})
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    result = []
+    cursor.execute("SELECT id, name, visits FROM bookmarks WHERE id = %s;", (id,))
+    result = cursor.fetchone()
+
+    close_db_connection(cursor, conn)
+
+    if not result:
+        raise HTTPException(status_code=404, detail={"error": "No bookmark with this id"})
+
+    return result
+
+# Delete a bookmark
+@app.delete("/api/bookmarks/{id}", status_code=204, operation_id="deleteBookmark", responses={404: {"model": Error}})
+def delete_bookmark(id: int):
+    if id <= 0:
+        raise HTTPException(status_code=404, detail={"error": "The id is not a positive integer"})
+
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    result = []
+    cursor.execute("DELETE FROM bookmarks WHERE id = %s RETURNING id;", (id,))
+    result = cursor.fetchone()
+
+    if not result:
+        close_db_connection(cursor, conn)
+        raise HTTPException(status_code=404, detail={"error": "No bookmark with this id"})
+    else:
+        conn.commit()
+
+    close_db_connection(cursor, conn)
