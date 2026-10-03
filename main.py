@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, status, HTTPException
+from dotenv import load_dotenv
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -8,11 +9,13 @@ app = FastAPI(title="Bookmarks API", version="1.0")
 
 # DATABASE CONNECTION -------------------------------------------------------------------
 
+load_dotenv()
+
 DB_CONFIG = {
     "host": "localhost",
     "database": os.getenv("DB_NAME", "postgres"),
     "user": os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", "Vic62189l555"),
+    "password": os.getenv("DB_PASSWORD", ""),
     "port": os.getenv("DB_PORT", "5432")
 }
 

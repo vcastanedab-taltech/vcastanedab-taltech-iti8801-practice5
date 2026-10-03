@@ -4,3 +4,4 @@
 .terraform/
 backend.hcl
 .venv/
+.env
