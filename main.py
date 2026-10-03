@@ -1,18 +1,19 @@
+import os
 from fastapi import FastAPI, status, HTTPException
 from pydantic import BaseModel
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-app = FastAPI(title="Mini Items API", version="1.0")
+app = FastAPI(title="Bookmarks API", version="1.0")
 
 # DATABASE CONNECTION -------------------------------------------------------------------
 
 DB_CONFIG = {
-    "host": "localhost",
-    "database": "postgres",
-    "user": "postgres",
-    "password": "Vic62189l555",
-    "port": "5432"
+    "host": os.getenv("DB_HOST", "localhost"),
+    "database": os.getenv("DB_NAME", "postgres"),
+    "user": os.getenv("DB_USER", "postgres"),
+    "password": os.getenv("DB_PASSWORD", "postgres"),
+    "port": os.getenv("DB_PORT", "5432")
 }
 
 def get_db_connection():
@@ -20,7 +21,8 @@ def get_db_connection():
         connection = psycopg2.connect(**DB_CONFIG)
         return connection
     except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Database does not answer: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, 
+                            detail=f"Database does not answer: {str(e)}")
 
 def close_db_connection(cursor, connection):
     cursor.close()
@@ -44,7 +46,7 @@ class Bookmark(BaseModel):
     visits: int
 
 # Check if the service is up and can reach its database
-@app.get("/health",status_code=200, operation_id="health")
+@app.get("/health",status_code=status.HTTP_200_OK, operation_id="health")
 def health():
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -53,21 +55,23 @@ def health():
         cursor.execute("SELECT 1;")
     except Exception as e:
         close_db_connection(cursor, conn)
-        raise HTTPException(status_code=503, detail="Service up, but the database does not answer")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail="Service up, but the database does not answer")
 
     close_db_connection(cursor, conn)
 
     return Health(status="ok")
 
 # Get all bookmarks, or those with exactly this name
-@app.get("/api/bookmarks", status_code=200, operation_id="listBookmarks")
+@app.get("/api/bookmarks", status_code=status.HTTP_200_OK, operation_id="listBookmarks")
 def list_bookmarks(name: str | None = None):
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
 
     result = []
     if name:
-        cursor.execute("SELECT id, name, visits FROM bookmarks WHERE name = %s ORDER BY id ASC;", (name,))
+        cursor.execute("SELECT id, name, visits FROM bookmarks WHERE name = %s ORDER BY id ASC;", 
+                       (name,))
     else:
         cursor.execute("SELECT id, name, visits FROM bookmarks ORDER BY id ASC;")
     result = cursor.fetchall()
@@ -78,12 +82,16 @@ def list_bookmarks(name: str | None = None):
     return result
 
 # Create a bookmark
-@app.post("/api/bookmarks", status_code=201, operation_id="createBookmark", responses={400: {"model": Error}})
+@app.post("/api/bookmarks", status_code=status.HTTP_201_CREATED,
+           operation_id="createBookmark", 
+           responses={status.HTTP_400_BAD_REQUEST: {"model": Error}})
 def create_bookmark(bookmark: NewBookmark):
     if not bookmark.name or len(bookmark.name) < 1 or len(bookmark.name) > 100 or "\u0000" in bookmark.name:
-        raise HTTPException(status_code=400, detail={"error": "The body is not a valid NewBookmark"})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                            detail={"error": "The body is not a valid NewBookmark"})
     elif bookmark.visits < 0 or bookmark.visits > 1000000:
-        raise HTTPException(status_code=400, detail={"error": "The body is not a valid NewBookmark"})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                            detail={"error": "The body is not a valid NewBookmark"})
 
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -100,10 +108,13 @@ def create_bookmark(bookmark: NewBookmark):
     return new_bookmark
 
 # Get a bookmark
-@app.get("/api/bookmarks/{id}", status_code=200, operation_id="getBookmark", responses={404: {"model": Error}})
+@app.get("/api/bookmarks/{id}", status_code=status.HTTP_200_OK, 
+         operation_id="getBookmark", 
+         responses={status.HTTP_404_NOT_FOUND: {"model": Error}})
 def get_bookmark(id: int):
     if id <= 0:
-        raise HTTPException(status_code=404, detail={"error": "The id is not a positive integer"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                             detail={"error": "The id is not a positive integer"})
 
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -115,15 +126,19 @@ def get_bookmark(id: int):
     close_db_connection(cursor, conn)
 
     if not result:
-        raise HTTPException(status_code=404, detail={"error": "No bookmark with this id"})
+        raise HTTPException(status_code=404, 
+                            detail={"error": "No bookmark with this id"})
 
     return result
 
 # Delete a bookmark
-@app.delete("/api/bookmarks/{id}", status_code=204, operation_id="deleteBookmark", responses={404: {"model": Error}})
+@app.delete("/api/bookmarks/{id}", status_code=status.HTTP_204_NO_CONTENT, 
+            operation_id="deleteBookmark", 
+            responses={status.HTTP_404_NOT_FOUND: {"model": Error}})
 def delete_bookmark(id: int):
     if id <= 0:
-        raise HTTPException(status_code=404, detail={"error": "The id is not a positive integer"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail={"error": "The id is not a positive integer"})
 
     conn = get_db_connection()
     cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -134,7 +149,8 @@ def delete_bookmark(id: int):
 
     if not result:
         close_db_connection(cursor, conn)
-        raise HTTPException(status_code=404, detail={"error": "No bookmark with this id"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                            detail={"error": "No bookmark with this id"})
     else:
         conn.commit()
 
