@@ -1,0 +1,9 @@
+*.tfvars
+*.tfstate
+*.tfstate.backup
+.terraform/
+backend.hcl
+.venv/
+.env
+__pycache__/
+bookmarks-api.yaml
