@@ -19,8 +19,12 @@ services:
     image: ghcr.io/vcastanedab-taltech/bookmarks-api:v2.1
     environment:
       MODE: api
+      DB_HOST: db
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@db:5432/postgres?sslmode=disable
-      DB_TARGET: db:5432
+      DB_PORT: 5432
     networks:
       [frontend, backend]
     depends_on:
