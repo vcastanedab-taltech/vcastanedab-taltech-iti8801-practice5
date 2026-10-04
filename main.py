@@ -90,7 +90,7 @@ def list_bookmarks(name: str | None = None):
            responses={status.HTTP_400_BAD_REQUEST: {"model": Error}})
 def create_bookmark(bookmark_raw_data: dict):
     try:
-        bookmark = NewBookmark.model_validate(bookmark_raw_data)
+        bookmark = NewBookmark.model_validate(bookmark_raw_data, strict=True)
     except ValidationError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
