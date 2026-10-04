@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI, status, HTTPException
 from dotenv import load_dotenv
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -89,6 +89,13 @@ def list_bookmarks(name: str | None = None):
            operation_id="createBookmark", 
            responses={status.HTTP_400_BAD_REQUEST: {"model": Error}})
 def create_bookmark(bookmark: NewBookmark):
+    try:
+        bookmark = NewBookmark.model_validate(bookmark)
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail={"error": "The body is not a valid NewBookmark"}
+        )
     if not bookmark.name or len(bookmark.name) < 1 or len(bookmark.name) > 100 or "\u0000" in bookmark.name:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                             detail={"error": "The body is not a valid NewBookmark"})
