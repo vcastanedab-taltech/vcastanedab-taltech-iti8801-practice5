@@ -5,3 +5,4 @@
 backend.hcl
 .venv/
 .env
+__pycache__/
