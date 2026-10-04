@@ -12,7 +12,7 @@ app = FastAPI(title="Bookmarks API", version="1.0")
 load_dotenv()
 
 DB_CONFIG = {
-    "host": "localhost",
+    "host": os.getenv("DB_HOST", "db"),
     "database": os.getenv("DB_NAME", "postgres"),
     "user": os.getenv("DB_USER", "postgres"),
     "password": os.getenv("DB_PASSWORD", ""),
