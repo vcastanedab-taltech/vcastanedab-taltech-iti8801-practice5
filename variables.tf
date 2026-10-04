@@ -24,3 +24,8 @@ variable "vm_size" {
   type    = string
   default = "Standard_B2ats_v2"
 }
+
+variable "db_password" {
+    type = string
+    sensitive = true
+}

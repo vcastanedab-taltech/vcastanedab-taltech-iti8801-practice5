@@ -7,4 +7,5 @@ packages:
 runcmd:
   # The compose needs the database creation script and nginx config file
   - cd /home/bookmark-admin && git clone https://github.com/vcastanedab-taltech/vcastanedab-taltech-iti8801-practice5.git repo
+  - echo "DB_PASSWORD=${db_password}" > /home/bookmark-admin/repo/.env
   - cd /home/bookmark-admin/repo && docker compose up -d
