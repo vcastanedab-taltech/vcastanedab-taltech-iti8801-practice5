@@ -18,7 +18,7 @@ resource "azurerm_subnet" "api" {
     resource_group_name = azurerm_resource_group.rg.name
     virtual_network_name = azurerm_virtual_network.vnet.name
     address_prefixes = ["10.60.1.0/24"]
-    default_outbound_access_enabled = false
+    default_outbound_access_enabled = true
 }
 
 # Security Rules

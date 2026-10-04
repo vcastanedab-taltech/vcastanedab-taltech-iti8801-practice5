@@ -14,6 +14,11 @@ resource "azurerm_network_interface" "api" {
   }
 }
 
+resource "azurerm_subnet_network_security_group_association" "api" {
+  subnet_id                 = azurerm_subnet.api.id
+  network_security_group_id = azurerm_network_security_group.api.id
+}
+
 # Virtual Machine
 resource "azurerm_linux_virtual_machine" "api" {
   name                  = "${var.prefix}-api"
