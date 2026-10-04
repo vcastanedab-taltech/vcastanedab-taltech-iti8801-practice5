@@ -19,7 +19,7 @@ services:
     image: ghcr.io/vcastanedab-taltech/bookmarks-api:v2.1
     environment:
       MODE: api
-      DATABASE_URL: postgres:${DB_PASSWORD}@db:5432/postgres?sslmode=disable
+      DATABASE_URL: postgres://postgres:${DB_PASSWORD}@db:5432/postgres?sslmode=disable
       DB_TARGET: db:5432
     networks:
       [frontend, backend]
