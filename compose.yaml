@@ -1,0 +1,43 @@
+services:
+  db: 
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db_creation.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      [backend]
+  api:
+    build: .
+    image: bookmarks-api:v2.1
+    environment:
+      MODE: api
+      DATABASE_URL: postgres:${DB_PASSWORD}@db:5432/postgres?sslmode=disable
+      DB_TARGET: db:5432
+    networks:
+      [frontend, backend]
+    depends_on:
+      db:
+        condition: service_healthy
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    networks: [frontend]
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on: [api]
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  postgres_data:
