@@ -6,3 +6,4 @@ backend.hcl
 .venv/
 .env
 __pycache__/
+*.hcl
