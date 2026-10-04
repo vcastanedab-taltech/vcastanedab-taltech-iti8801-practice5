@@ -9,7 +9,7 @@ COPY main.py ./
 # We replace the previous stage with a runtime stage
 FROM python:3.11-slim
 WORKDIR /bookmarks_app
-RUN apt-get update && apt-get upgrade -y && pip install --upgrade pip setuptools "wheel>=0.46.2"
+RUN apt-get update && apt-get upgrade -y && pip uninstall -y pip setuptools wheel
 COPY --from=build /bookmarks_app /bookmarks_app
 
 ENV PYTHONPATH=/bookmarks_app/libraries
