@@ -4,6 +4,9 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, ValidationError
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from fastapi import Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 app = FastAPI(title="Bookmarks API", version="1.0")
 
@@ -88,10 +91,11 @@ def list_bookmarks(name: str | None = None):
 @app.post("/api/bookmarks", status_code=status.HTTP_201_CREATED,
            operation_id="createBookmark", 
            responses={status.HTTP_400_BAD_REQUEST: {"model": Error}})
-def create_bookmark(bookmark_raw_data: dict):
+async def create_bookmark(request: Request):
     try:
+        bookmark_raw_data = await request.json()
         bookmark = NewBookmark.model_validate(bookmark_raw_data, strict=True)
-    except ValidationError:
+    except (ValueError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
             detail={"error": "The body is not a valid NewBookmark"}
