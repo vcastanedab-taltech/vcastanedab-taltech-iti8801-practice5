@@ -8,14 +8,19 @@ variable "location" {
     type = string
 }
 
-variable "resource_group_name" {
-    type = string
-}
-
-variable "resource_group_location" {
-    type = string
-}
-
 variable "my_ip" {
     type = string
+}
+
+variable "admin_ssh_key" {
+    type = string
+}
+
+variable "subscription_id" {
+    type = string
+}
+
+variable "vm_size" {
+  type    = string
+  default = "Standard_B2ats_v2"
 }
