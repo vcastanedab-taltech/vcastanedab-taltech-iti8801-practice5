@@ -6,6 +6,6 @@ packages:
   - docker-compose-v2
 runcmd:
   # The compose needs the database creation script and nginx config file
-  - git clone
+  - git clone https://github.com/vcastanedab-taltech/vcastanedab-taltech-iti8801-practice5.git
   - cd /home/bookmark-admin/
   - docker compose up -d
