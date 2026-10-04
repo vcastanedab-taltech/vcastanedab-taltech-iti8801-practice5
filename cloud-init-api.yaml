@@ -1,0 +1,11 @@
+#cloud-config
+package_update: true
+packages:
+  - git
+  - docker.io
+  - docker-compose-v2
+runcmd:
+  # The compose needs the database creation script and nginx config file
+  - git clone
+  - cd /home/bookmark-admin/
+  - docker compose up -d
