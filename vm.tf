@@ -49,7 +49,7 @@ resource "azurerm_linux_virtual_machine" "api" {
 
 # The boot script
 locals {
-  api_cloud_init = base64encode(file("${path.module}/cloud-init-api.yaml",
+  api_cloud_init = base64encode(templatefile("${path.module}/cloud-init-api.yaml",
   {db_password = var.db_password}
   ))
 }
