@@ -2,8 +2,9 @@
 FROM python:3.11-slim AS build
 WORKDIR /bookmarks_app
 
+RUN apt-get update && apt-get upgrade -y
 # Install the necessary python libraries and packages
-RUN pip install --target=/bookmarks_app/libraries fastapi "fastapi[standard]" psycopg2-binary
+RUN pip install --target=/bookmarks_app/libraries fastapi "fastapi[standard]" psycopg2-binary "jaraco.context>=6.1.0" "wheel>=0.46.2"
 COPY main.py db_creation.sql ./
 
 # We replace the previous stage with a runtime stage

@@ -7,3 +7,4 @@ backend.hcl
 .env
 __pycache__/
 bookmarks-api.yaml
+db_creation.sql
