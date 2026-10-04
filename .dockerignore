@@ -8,3 +8,4 @@ backend.hcl
 __pycache__/
 bookmarks-api.yaml
 db_creation.sql
+compose.yaml
